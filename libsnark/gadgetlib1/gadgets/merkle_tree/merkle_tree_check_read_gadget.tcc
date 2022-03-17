@@ -73,7 +73,7 @@ merkle_tree_check_read_gadget<FieldT, HashT>::merkle_tree_check_read_gadget(prot
                                                                 FMT(this->annotation_prefix, " digest_selector_%zu", i)));
     }
 
-    check_root.reset(new bit_vector_copy_gadget<FieldT>(pb, computed_root->bits, root.bits, read_successful, FieldT::capacity(), FMT(annotation_prefix, " check_root")));
+    check_root.reset(new bit_vector_copy_gadget<FieldT>(pb, computed_root->bits, root.bits, read_successful, FieldT::floor_size_in_bits(), FMT(annotation_prefix, " check_root")));
 }
 
 template<typename FieldT, typename HashT>
@@ -124,7 +124,7 @@ size_t merkle_tree_check_read_gadget<FieldT, HashT>::expected_constraints(const 
     const size_t hasher_constraints = tree_depth * HashT::expected_constraints(false);
     const size_t propagator_constraints = tree_depth * HashT::get_digest_len();
     const size_t authentication_path_constraints = 2 * tree_depth * HashT::get_digest_len();
-    const size_t check_root_constraints = 3 * libff::div_ceil(HashT::get_digest_len(), FieldT::capacity());
+    const size_t check_root_constraints = 3 * libff::div_ceil(HashT::get_digest_len(), FieldT::floor_size_in_bits());
 
     return hasher_constraints + propagator_constraints + authentication_path_constraints + check_root_constraints;
 }
@@ -132,6 +132,7 @@ size_t merkle_tree_check_read_gadget<FieldT, HashT>::expected_constraints(const 
 template<typename FieldT, typename HashT>
 void test_merkle_tree_check_read_gadget()
 {
+#ifndef NDEBUG
     /* prepare test */
     const size_t digest_len = HashT::get_digest_len();
     const size_t tree_depth = 16;
@@ -189,6 +190,9 @@ void test_merkle_tree_check_read_gadget()
     const size_t num_constraints = pb.num_constraints();
     const size_t expected_constraints = merkle_tree_check_read_gadget<FieldT, HashT>::expected_constraints(tree_depth);
     assert(num_constraints == expected_constraints);
+#else // NDEBUG
+    printf("All tests here depend on assert() which is disabled by -DNDEBUG. Please recompile and run again.\n");
+#endif // NDEBUG
 }
 
 } // libsnark

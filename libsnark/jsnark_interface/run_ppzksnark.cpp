@@ -78,7 +78,9 @@ int main(int argc, char **argv) {
 	const bool test_serialization = false;
 	bool successBit = false;
 	if(argc == 3) {
-		successBit = libsnark::run_r1cs_ppzksnark<libff::default_ec_pp>(example, test_serialization);
+//		successBit = libsnark::run_r1cs_ppzksnark<libff::default_ec_pp>(example, test_serialization);
+        successBit = libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
+                example, test_serialization);
 
 	} else {
 		// The following code makes use of the observation that 

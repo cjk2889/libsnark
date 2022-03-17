@@ -14,7 +14,7 @@
 #ifndef KNAPSACK_GADGET_TCC_
 #define KNAPSACK_GADGET_TCC_
 
-#include <libff/algebra/fields/field_utils.hpp>
+#include <libff/algebra/field_utils/field_utils.hpp>
 #include <libff/common/rng.hpp>
 
 namespace libsnark {
@@ -153,8 +153,8 @@ knapsack_CRH_with_bit_out_gadget<FieldT>::knapsack_CRH_with_bit_out_gadget(proto
 
     for (size_t i = 0; i < dimension; ++i)
     {
-        output[i].assign(pb, pb_packing_sum<FieldT>(pb_variable_array<FieldT>(output_digest.bits.begin() + i * FieldT::size_in_bits(),
-                                                                              output_digest.bits.begin() + (i + 1) * FieldT::size_in_bits())));
+        output[i].assign(pb, pb_packing_sum<FieldT>(pb_variable_array<FieldT>(output_digest.bits.begin() + i * FieldT::ceil_size_in_bits(),
+                                                                              output_digest.bits.begin() + (i + 1) * FieldT::ceil_size_in_bits())));
     }
 
     hasher.reset(new knapsack_CRH_with_field_out_gadget<FieldT>(pb, input_len, input_block, output, FMT(annotation_prefix, " hasher")));
@@ -184,8 +184,8 @@ void knapsack_CRH_with_bit_out_gadget<FieldT>::generate_r1cs_witness()
     const libff::bit_vector input = input_block.bits.get_bits(this->pb);
     for (size_t i = 0; i < dimension; ++i)
     {
-        pb_variable_array<FieldT> va(output_digest.bits.begin() + i * FieldT::size_in_bits(),
-                                     output_digest.bits.begin() + (i + 1) * FieldT::size_in_bits());
+        pb_variable_array<FieldT> va(output_digest.bits.begin() + i * FieldT::ceil_size_in_bits(),
+                                     output_digest.bits.begin() + (i + 1) * FieldT::ceil_size_in_bits());
         va.fill_with_bits_of_field_element(this->pb, this->pb.lc_val(output[i]));
     }
 }
@@ -193,7 +193,7 @@ void knapsack_CRH_with_bit_out_gadget<FieldT>::generate_r1cs_witness()
 template<typename FieldT>
 size_t knapsack_CRH_with_bit_out_gadget<FieldT>::get_digest_len()
 {
-    return knapsack_dimension<FieldT>::dimension * FieldT::size_in_bits();
+    return knapsack_dimension<FieldT>::dimension * FieldT::ceil_size_in_bits();
 }
 
 template<typename FieldT>
@@ -234,6 +234,7 @@ void knapsack_CRH_with_bit_out_gadget<FieldT>::sample_randomness(const size_t in
 template<typename FieldT>
 void test_knapsack_CRH_with_bit_out_gadget_internal(const size_t dimension, const libff::bit_vector &input_bits, const libff::bit_vector &digest_bits)
 {
+#ifndef NDEBUG
     assert(knapsack_dimension<FieldT>::dimension == dimension);
     knapsack_CRH_with_bit_out_gadget<FieldT>::sample_randomness(input_bits.size());
     protoboard<FieldT> pb;
@@ -252,6 +253,12 @@ void test_knapsack_CRH_with_bit_out_gadget_internal(const size_t dimension, cons
     const size_t num_constraints = pb.num_constraints();
     const size_t expected_constraints = knapsack_CRH_with_bit_out_gadget<FieldT>::expected_constraints();
     assert(num_constraints == expected_constraints);
+#else // NDEBUG
+    printf("All tests here depend on assert() which is disabled by -DNDEBUG. Please recompile and run again.\n");
+    libff::UNUSED(dimension);
+    libff::UNUSED(input_bits);
+    libff::UNUSED(digest_bits);
+#endif // NDEBUG
 }
 
 } // libsnark

@@ -6,7 +6,7 @@
  *****************************************************************************/
 #include <libff/algebra/curves/mnt/mnt4/mnt4_pp.hpp>
 #include <libff/algebra/curves/mnt/mnt6/mnt6_pp.hpp>
-#include <libff/algebra/fields/field_utils.hpp>
+#include <libff/algebra/field_utils/field_utils.hpp>
 
 #include <libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp>
 #include <libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp>
@@ -17,6 +17,8 @@
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 
 using namespace libsnark;
+
+#ifndef NDEBUG
 
 template<typename FieldT>
 void dump_constraints(const protoboard<FieldT> &pb)
@@ -47,7 +49,7 @@ void test_verifier(const std::string &annotation_A, const std::string &annotatio
     bool bit = r1cs_ppzksnark_verifier_strong_IC<ppT_A>(keypair.vk, example.primary_input, pi);
     assert(bit);
 
-    const size_t elt_size = FieldT_A::size_in_bits();
+    const size_t elt_size = FieldT_A::ceil_size_in_bits();
     const size_t primary_input_size_in_bits = elt_size * primary_input_size;
     const size_t vk_size_in_bits = r1cs_ppzksnark_verification_key_variable<ppT_B>::size_in_bits(primary_input_size);
 
@@ -119,7 +121,7 @@ void test_hardcoded_verifier(const std::string &annotation_A, const std::string 
     bool bit = r1cs_ppzksnark_verifier_strong_IC<ppT_A>(keypair.vk, example.primary_input, pi);
     assert(bit);
 
-    const size_t elt_size = FieldT_A::size_in_bits();
+    const size_t elt_size = FieldT_A::ceil_size_in_bits();
     const size_t primary_input_size_in_bits = elt_size * primary_input_size;
 
     protoboard<FieldT_B> pb;
@@ -374,7 +376,7 @@ void test_full_precomputed_pairing(const std::string &annotation)
     printf("number of constraints for full precomputed pairing (Fr is %s)  = %zu\n", annotation.c_str(), pb.num_constraints());
 }
 
-int main(void)
+int main()
 {
     libff::start_profiling();
     libff::mnt4_pp::init_public_params();
@@ -428,3 +430,11 @@ int main(void)
     test_hardcoded_verifier<libff::mnt4_pp, libff::mnt6_pp>("mnt4", "mnt6");
     test_hardcoded_verifier<libff::mnt6_pp, libff::mnt4_pp>("mnt6", "mnt4");
 }
+
+#else // NDEBUG
+
+int main()
+{
+    printf("All tests here depend on assert() which is disabled by -DNDEBUG. Please recompile and run again.\n");
+}
+#endif // NDEBUG
